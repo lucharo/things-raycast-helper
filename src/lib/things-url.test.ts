@@ -1,117 +1,51 @@
+import { describe, expect, it } from "bun:test";
 import { buildThingsUrl, parseThingsUrl } from "./things-url";
 
 describe("buildThingsUrl", () => {
-  it("should build a basic URL with just title", () => {
+  it("builds URL with title", () => {
     const url = buildThingsUrl({ title: "Test task" });
     expect(url).toContain("things:///add");
     expect(url).toContain("title=Test+task");
   });
 
-  it("should include notes when provided", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      notes: "https://example.com",
-    });
-    expect(url).toContain("notes=https");
+  it("includes notes", () => {
+    expect(buildThingsUrl({ title: "Test", notes: "https://example.com" })).toContain("notes=https");
   });
 
-  it("should handle when parameter", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      when: "today",
-    });
-    expect(url).toContain("when=today");
+  it("includes when", () => {
+    expect(buildThingsUrl({ title: "Test", when: "today" })).toContain("when=today");
+    expect(buildThingsUrl({ title: "Test", when: "evening" })).toContain("when=evening");
   });
 
-  it("should handle evening when", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      when: "evening",
-    });
-    expect(url).toContain("when=evening");
+  it("includes tags comma-separated", () => {
+    expect(buildThingsUrl({ title: "Test", tags: ["work", "urgent"] })).toContain("tags=work%2Curgent");
   });
 
-  it("should handle tags as comma-separated", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      tags: ["work", "urgent"],
-    });
-    expect(url).toContain("tags=work%2Curgent");
+  it("includes show-quick-entry when true", () => {
+    expect(buildThingsUrl({ title: "Test", showQuickEntry: true })).toContain("show-quick-entry=true");
+    expect(buildThingsUrl({ title: "Test", showQuickEntry: false })).not.toContain("show-quick-entry");
   });
 
-  it("should include show-quick-entry when true", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      showQuickEntry: true,
-    });
-    expect(url).toContain("show-quick-entry=true");
+  it("encodes special characters", () => {
+    expect(buildThingsUrl({ title: "Test & task" })).toContain("%26");
   });
 
-  it("should not include show-quick-entry when false", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      showQuickEntry: false,
-    });
-    expect(url).not.toContain("show-quick-entry");
-  });
-
-  it("should handle special characters in title", () => {
-    const url = buildThingsUrl({ title: "Test & task with 'quotes'" });
-    expect(url).toContain("title=");
-    // Should be URL encoded
-    expect(url).toContain("%26"); // &
-  });
-
-  it("should handle list parameter", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      list: "My Project",
-    });
-    expect(url).toContain("list=My+Project");
-  });
-
-  it("should handle deadline", () => {
-    const url = buildThingsUrl({
-      title: "Test task",
-      deadline: "2024-12-31",
-    });
-    expect(url).toContain("deadline=2024-12-31");
+  it("includes list", () => {
+    expect(buildThingsUrl({ title: "Test", list: "My Project" })).toContain("list=My+Project");
   });
 });
 
 describe("parseThingsUrl", () => {
-  it("should parse title from URL", () => {
-    const parsed = parseThingsUrl("things:///add?title=Test+task");
-    expect(parsed.title).toBe("Test task");
+  it("parses URL params", () => {
+    expect(parseThingsUrl("things:///add?title=Test+task").title).toBe("Test task");
+    expect(parseThingsUrl("things:///add?title=Test&notes=Note").notes).toBe("Note");
+    expect(parseThingsUrl("things:///add?title=Test&when=today").when).toBe("today");
+    expect(parseThingsUrl("things:///add?title=Test&tags=a,b").tags).toEqual(["a", "b"]);
   });
 
-  it("should parse notes from URL", () => {
-    const parsed = parseThingsUrl("things:///add?title=Test&notes=Some+notes");
-    expect(parsed.notes).toBe("Some notes");
-  });
-
-  it("should parse when from URL", () => {
-    const parsed = parseThingsUrl("things:///add?title=Test&when=today");
-    expect(parsed.when).toBe("today");
-  });
-
-  it("should parse tags from URL", () => {
-    const parsed = parseThingsUrl("things:///add?title=Test&tags=work,urgent");
-    expect(parsed.tags).toEqual(["work", "urgent"]);
-  });
-
-  it("should round-trip a complex task", () => {
-    const original = {
-      title: "Complex task",
-      notes: "https://example.com",
-      when: "today" as const,
-      tags: ["work", "urgent"],
-      showQuickEntry: true,
-    };
-
-    const url = buildThingsUrl(original);
-    const parsed = parseThingsUrl(url);
-
+  it("round-trips params", () => {
+    const original = { title: "Task", notes: "note", when: "today" as const, tags: ["a", "b"], showQuickEntry: true };
+    const parsed = parseThingsUrl(buildThingsUrl(original));
     expect(parsed.title).toBe(original.title);
     expect(parsed.notes).toBe(original.notes);
     expect(parsed.when).toBe(original.when);

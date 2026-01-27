@@ -15,6 +15,8 @@ import { getFrontmostAppContext, formatTitleWithEmoji } from "./lib/frontmost-ap
 import { buildThingsUrl } from "./lib/things-url";
 import { CapturedContext } from "./lib/types";
 
+import { ThingsTaskParams } from "./lib/types";
+
 interface Preferences {
   defaultList: "inbox" | "today" | "evening" | "someday";
   showQuickEntry: boolean;
@@ -62,7 +64,7 @@ export default function Command() {
     const url = buildThingsUrl({
       title,
       notes: notes || undefined,
-      when: when === "inbox" ? undefined : when,
+      when: when === "inbox" ? undefined : (when as ThingsTaskParams["when"]),
       tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
       showQuickEntry: preferences.showQuickEntry,
     });
@@ -85,7 +87,7 @@ export default function Command() {
     }
   }
 
-  async function handleQuickAdd(targetWhen?: string) {
+  async function handleQuickAdd(targetWhen?: ThingsTaskParams["when"]) {
     const url = buildThingsUrl({
       title,
       notes: notes || undefined,
