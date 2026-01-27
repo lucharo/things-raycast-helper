@@ -6,6 +6,7 @@ dist/
 
 # Raycast
 .raycast/
+raycast-env.d.ts
 
 # IDE
 .idea/

@@ -22,8 +22,8 @@ export async function getFrontmostAppContext(): Promise<CapturedContext> {
 }
 
 async function getGenericContext(appName: string): Promise<CapturedContext> {
-  // Escape quotes in app name for AppleScript
-  const escaped = appName.replace(/"/g, '\\"');
+  // Escape backslashes and quotes for AppleScript
+  const escaped = appName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   try {
     const title = await runAppleScript(`
       tell application "System Events"
