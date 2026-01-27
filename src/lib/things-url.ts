@@ -26,11 +26,6 @@ export function buildThingsUrl(params: ThingsTaskParams): string {
   return `${THINGS_URL_BASE}?${queryParams.toString()}`;
 }
 
-export function openThingsUrl(url: string): void {
-  // Use open command to handle the URL scheme
-  require("child_process").execSync(`open "${url}"`);
-}
-
 // For testing: parse a Things URL back into params
 export function parseThingsUrl(url: string): Partial<ThingsTaskParams> {
   const urlObj = new URL(url);
