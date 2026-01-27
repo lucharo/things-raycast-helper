@@ -1,8 +1,17 @@
 import { runAppleScript } from "run-applescript";
 import { CapturedContext } from "./types";
 
+// Use newline as delimiter - can't appear in single-line AppleScript returns
+const DELIM = "\n";
+
 interface AppHandler {
   getContext: () => Promise<CapturedContext>;
+}
+
+function parseResult(result: string): [string, string] {
+  const idx = result.indexOf(DELIM);
+  if (idx === -1) return [result, ""];
+  return [result.slice(0, idx), result.slice(idx + 1)];
 }
 
 const browserHandler = (appName: string): AppHandler => ({
@@ -12,9 +21,9 @@ const browserHandler = (appName: string): AppHandler => ({
         set tabURL to URL of active tab of front window
         set tabTitle to title of active tab of front window
       end tell
-      return tabTitle & "|||" & tabURL
+      return tabTitle & "\n" & tabURL
     `);
-    const [title, url] = result.split("|||");
+    const [title, url] = parseResult(result);
     return { appName, title, url, type: "browser" };
   },
 });
@@ -26,9 +35,9 @@ const safariHandler: AppHandler = {
         set docURL to URL of front document
         set docTitle to name of front document
       end tell
-      return docTitle & "|||" & docURL
+      return docTitle & "\n" & docURL
     `);
-    const [title, url] = result.split("|||");
+    const [title, url] = parseResult(result);
     return { appName: "Safari", title, url, type: "browser" };
   },
 };
@@ -42,10 +51,42 @@ const mailHandler: AppHandler = {
         set theID to message id of theMessage
         set theURL to "message://%3c" & theID & "%3e"
       end tell
-      return theSubject & "|||" & theURL
+      return theSubject & "\n" & theURL
     `);
-    const [title, url] = result.split("|||");
+    const [title, url] = parseResult(result);
     return { appName: "Mail", title, url, type: "email" };
+  },
+};
+
+const outlookHandler: AppHandler = {
+  async getContext() {
+    const result = await runAppleScript(`
+      tell application "Microsoft Outlook"
+        set selMessages to selected objects
+        if selMessages is not {} then
+          set theMessage to item 1 of selMessages
+          set theSubject to subject of theMessage
+          set theID to id of theMessage
+          return theSubject & "\n" & "outlook://open?id=" & theID
+        end if
+      end tell
+      return "\n"
+    `);
+    const [title, url] = parseResult(result);
+    return { appName: "Microsoft Outlook", title: title || "Outlook Email", url: url || null, type: "email" };
+  },
+};
+
+const slackHandler: AppHandler = {
+  async getContext() {
+    const title = await runAppleScript(`
+      tell application "System Events"
+        tell process "Slack"
+          return name of front window
+        end tell
+      end tell
+    `);
+    return { appName: "Slack", title, url: null, type: "message" };
   },
 };
 
@@ -56,18 +97,14 @@ const finderHandler: AppHandler = {
         set theSelection to selection as alias list
         if theSelection is not {} then
           set theFile to item 1 of theSelection
-          set theName to name of theFile
-          set theURL to URL of theFile
-          return theName & "|||" & theURL
+          return (name of theFile) & "\n" & (URL of theFile)
         else
-          set folderName to name of front window
           set folderTarget to target of front window as alias
-          set folderURL to URL of folderTarget
-          return folderName & "|||" & folderURL
+          return (name of front window) & "\n" & (URL of folderTarget)
         end if
       end tell
     `);
-    const [title, url] = result.split("|||");
+    const [title, url] = parseResult(result);
     return { appName: "Finder", title, url, type: "file" };
   },
 };
@@ -79,27 +116,38 @@ const notesHandler: AppHandler = {
         set theNote to selection
         if theNote is not {} then
           set theNote to item 1 of theNote
-          set theName to name of theNote
-          set theID to id of theNote
-          set theURL to "notes://showNote?identifier=" & theID
-          return theName & "|||" & theURL
+          return (name of theNote) & "\n" & "notes://showNote?identifier=" & (id of theNote)
         end if
       end tell
-      return "|||"
+      return "\n"
     `);
-    const [title, url] = result.split("|||");
+    const [title, url] = parseResult(result);
     return { appName: "Notes", title: title || "Note", url: url || null, type: "note" };
+  },
+};
+
+const whatsappHandler: AppHandler = {
+  async getContext() {
+    const title = await runAppleScript(`
+      tell application "System Events"
+        tell process "WhatsApp"
+          return name of front window
+        end tell
+      end tell
+    `);
+    return { appName: "WhatsApp", title, url: null, type: "message" };
   },
 };
 
 const handlers: Record<string, AppHandler> = {
   Safari: safariHandler,
   "Google Chrome": browserHandler("Google Chrome"),
-  "Microsoft Edge": browserHandler("Microsoft Edge"),
-  Arc: browserHandler("Arc"),
   "Brave Browser": browserHandler("Brave Browser"),
-  Firefox: browserHandler("Firefox"),
+  Arc: browserHandler("Arc"),
   Mail: mailHandler,
+  "Microsoft Outlook": outlookHandler,
+  Slack: slackHandler,
+  WhatsApp: whatsappHandler,
   Finder: finderHandler,
   Notes: notesHandler,
 };

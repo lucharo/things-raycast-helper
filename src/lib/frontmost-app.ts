@@ -5,16 +5,16 @@ import { getAppHandler } from "./app-handlers";
 export async function getFrontmostAppContext(): Promise<CapturedContext> {
   const appName = await runAppleScript(`
     tell application "System Events"
-      set frontApp to name of first process whose frontmost is true
+      return name of first process whose frontmost is true
     end tell
-    return frontApp
   `);
 
   const handler = getAppHandler(appName);
   if (handler) {
     try {
       return await handler.getContext();
-    } catch {
+    } catch (err) {
+      console.error(`Handler failed for ${appName}:`, err);
       return getGenericContext(appName);
     }
   }
@@ -22,17 +22,19 @@ export async function getFrontmostAppContext(): Promise<CapturedContext> {
 }
 
 async function getGenericContext(appName: string): Promise<CapturedContext> {
+  // Escape quotes in app name for AppleScript
+  const escaped = appName.replace(/"/g, '\\"');
   try {
     const title = await runAppleScript(`
       tell application "System Events"
-        tell process "${appName}"
-          set windowTitle to name of front window
+        tell process "${escaped}"
+          return name of front window
         end tell
       end tell
-      return windowTitle
     `);
     return { appName, title: title || appName, url: null, type: "generic" };
-  } catch {
+  } catch (err) {
+    console.error(`Generic handler failed for ${appName}:`, err);
     return { appName, title: appName, url: null, type: "generic" };
   }
 }
@@ -43,6 +45,7 @@ export function formatTitleWithEmoji(context: CapturedContext): string {
     email: "📧",
     file: "📁",
     note: "📝",
+    message: "💬",
     generic: "📌",
   };
   return `${emoji[context.type]} ${context.title}`;

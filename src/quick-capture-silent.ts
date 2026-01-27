@@ -1,12 +1,7 @@
 import { closeMainWindow, showHUD, getPreferenceValues, open } from "@raycast/api";
 import { getFrontmostAppContext, formatTitleWithEmoji } from "./lib/frontmost-app";
 import { buildThingsUrl } from "./lib/things-url";
-
-interface Preferences {
-  defaultList: "inbox" | "today" | "evening" | "someday";
-  showQuickEntry: boolean;
-  urlInNotes: "notes" | "title";
-}
+import { Preferences } from "./lib/types";
 
 export default async function Command() {
   const preferences = getPreferenceValues<Preferences>();
@@ -15,15 +10,11 @@ export default async function Command() {
     const context = await getFrontmostAppContext();
     const formattedTitle = formatTitleWithEmoji(context);
 
-    let title: string;
-    let notes: string | undefined;
+    const title = preferences.urlInNotes === "notes"
+      ? formattedTitle
+      : context.url ? `${formattedTitle} - ${context.url}` : formattedTitle;
 
-    if (preferences.urlInNotes === "notes") {
-      title = formattedTitle;
-      notes = context.url || undefined;
-    } else {
-      title = context.url ? `${formattedTitle} - ${context.url}` : formattedTitle;
-    }
+    const notes = preferences.urlInNotes === "notes" ? context.url || undefined : undefined;
 
     const url = buildThingsUrl({
       title,
