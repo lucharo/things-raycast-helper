@@ -39,6 +39,16 @@ async function getGenericContext(appName: string): Promise<CapturedContext> {
   }
 }
 
+function sanitizeTitle(title: string): string {
+  try {
+    // Decode URL-encoded characters and replace + with space
+    return decodeURIComponent(title.replace(/\+/g, " ")).trim();
+  } catch {
+    // If decoding fails, just replace + with space
+    return title.replace(/\+/g, " ").trim();
+  }
+}
+
 export function formatTitleWithEmoji(context: CapturedContext): string {
   const emoji: Record<CapturedContext["type"], string> = {
     browser: "🌐",
@@ -48,5 +58,5 @@ export function formatTitleWithEmoji(context: CapturedContext): string {
     message: "💬",
     generic: "📌",
   };
-  return `${emoji[context.type]} ${context.title}`;
+  return `${emoji[context.type]} ${sanitizeTitle(context.title)}`;
 }

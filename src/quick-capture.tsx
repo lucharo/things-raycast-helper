@@ -22,6 +22,7 @@ export default function Command() {
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string>(preferences.defaultList);
+  const [project, setProject] = useState("");
   const [tags, setTags] = useState("");
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function Command() {
       title,
       notes: notes || undefined,
       when: when === "inbox" ? undefined : (when as ThingsTaskParams["when"]),
+      list: project || undefined,
       tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
       showQuickEntry: preferences.showQuickEntry,
     });
@@ -68,6 +70,7 @@ export default function Command() {
       title,
       notes: notes || undefined,
       when: targetWhen,
+      list: project || undefined,
       tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
       showQuickEntry: false,
     });
@@ -106,6 +109,7 @@ export default function Command() {
         <Form.Dropdown.Item value="tomorrow" title="Tomorrow" icon={Icon.Sun} />
         <Form.Dropdown.Item value="someday" title="Someday" icon={Icon.Clock} />
       </Form.Dropdown>
+      <Form.TextField id="project" title="Project" placeholder="Project or Area name" value={project} onChange={setProject} info="Leave empty for Inbox" />
       <Form.TextField id="tags" title="Tags" placeholder="tag1, tag2, tag3" value={tags} onChange={setTags} info="Comma-separated list of tags" />
     </Form>
   );
