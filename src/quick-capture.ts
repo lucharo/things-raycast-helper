@@ -4,16 +4,13 @@ import {
   closeMainWindow,
   PopToRootType,
 } from "@raycast/api";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { runAppleScript } from "run-applescript";
 import {
   getFrontmostAppContext,
   formatTitleWithEmoji,
 } from "./lib/frontmost-app";
 import { buildThingsUrl } from "./lib/things-url";
 import { Preferences } from "./lib/types";
-
-const execFileAsync = promisify(execFile);
 
 export default async function Command() {
   const preferences = getPreferenceValues<Preferences>();
@@ -49,8 +46,13 @@ export default async function Command() {
     });
 
     await closeMainWindow({ popToRootType: PopToRootType.Suspended });
-    // Use execFile to avoid shell interpretation of special characters
-    await execFileAsync("open", [url]);
+
+    // Small delay to let Raycast fully close
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Use AppleScript to open URL - may handle focus better
+    const escaped = url.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    await runAppleScript(`open location "${escaped}"`);
   } catch (error) {
     await showHUD(`Failed: ${String(error)}`);
   }
