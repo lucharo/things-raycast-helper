@@ -4,7 +4,7 @@ import {
   closeMainWindow,
   PopToRootType,
 } from "@raycast/api";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import {
   getFrontmostAppContext,
@@ -13,7 +13,7 @@ import {
 import { buildThingsUrl } from "./lib/things-url";
 import { Preferences } from "./lib/types";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export default async function Command() {
   const preferences = getPreferenceValues<Preferences>();
@@ -49,8 +49,8 @@ export default async function Command() {
     });
 
     await closeMainWindow({ popToRootType: PopToRootType.Suspended });
-    // Use shell open command directly to avoid Raycast focus issues
-    await execAsync(`open "${url}"`);
+    // Use execFile to avoid shell interpretation of special characters
+    await execFileAsync("open", [url]);
   } catch (error) {
     await showHUD(`Failed: ${String(error)}`);
   }
