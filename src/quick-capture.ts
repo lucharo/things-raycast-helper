@@ -9,7 +9,6 @@ import {
   getFrontmostAppContext,
   formatTitleWithEmoji,
 } from "./lib/frontmost-app";
-import { buildThingsUrl } from "./lib/things-url";
 import { Preferences } from "./lib/types";
 
 export default async function Command() {
@@ -32,27 +31,21 @@ export default async function Command() {
           ? `${formattedTitle} - ${context.url}`
           : formattedTitle;
 
-    const notes =
-      preferences.urlInNotes === "notes" ? context.url || undefined : undefined;
+    const notes = preferences.urlInNotes === "notes" ? context.url || "" : "";
 
-    const url = buildThingsUrl({
-      title,
-      notes,
-      when:
-        preferences.defaultList === "inbox"
-          ? undefined
-          : preferences.defaultList,
-      showQuickEntry: true,
-    });
+    // Escape for AppleScript
+    const escTitle = title.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const escNotes = notes.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
     await closeMainWindow({ popToRootType: PopToRootType.Suspended });
 
-    // Small delay to let Raycast fully close
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Use AppleScript to open URL - may handle focus better
-    const escaped = url.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    await runAppleScript(`open location "${escaped}"`);
+    // Use Things native AppleScript to show quick entry panel
+    await runAppleScript(`
+      tell application "Things3"
+        activate
+        show quick entry panel with properties {name:"${escTitle}", notes:"${escNotes}"}
+      end tell
+    `);
   } catch (error) {
     await showHUD(`Failed: ${String(error)}`);
   }
