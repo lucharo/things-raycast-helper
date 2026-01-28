@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import {
   getFrontmostAppContext,
   formatTitleWithEmoji,
+  ExcludedAppError,
 } from "./lib/frontmost-app";
 import { buildThingsUrl } from "./lib/things-url";
 import { CapturedContext, ThingsTaskParams, Preferences } from "./lib/types";
@@ -41,11 +42,20 @@ export default function Command() {
           setTitle(ctx.url ? `${formattedTitle} - ${ctx.url}` : formattedTitle);
         }
       } catch (error) {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "Failed to get app context",
-          message: String(error),
-        });
+        if (error instanceof ExcludedAppError) {
+          showToast({
+            style: Toast.Style.Failure,
+            title: "Terminal apps are excluded",
+            message: "Quick Capture doesn't work in terminal apps",
+          });
+          popToRoot();
+        } else {
+          showToast({
+            style: Toast.Style.Failure,
+            title: "Failed to get app context",
+            message: String(error),
+          });
+        }
       } finally {
         setIsLoading(false);
       }
