@@ -3,13 +3,13 @@ import { CapturedContext } from "./types";
 import { getAppHandler } from "./app-handlers";
 
 const EXCLUDED_APPS = new Set([
-  "Terminal",
-  "iTerm2",
-  "Ghostty",
-  "Alacritty",
+  "terminal",
+  "iterm2",
+  "ghostty",
+  "alacritty",
   "kitty",
-  "Warp",
-  "Hyper",
+  "warp",
+  "hyper",
 ]);
 
 export class ExcludedAppError extends Error {
@@ -26,7 +26,7 @@ export async function getFrontmostAppContext(): Promise<CapturedContext> {
     end tell
   `);
 
-  if (EXCLUDED_APPS.has(appName)) {
+  if (EXCLUDED_APPS.has(appName.toLowerCase())) {
     throw new ExcludedAppError(appName);
   }
 
