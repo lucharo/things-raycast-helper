@@ -3,7 +3,7 @@
   "title": "Things Quick Capture",
   "description": "Quickly capture tasks to Things 3 with context from the frontmost app",
   "icon": "command-icon.png",
-  "author": "Luis Chaves",
+  "author": "lucharo",
   "authorUrl": "https://luischav.es",
   "categories": ["Productivity", "Applications"],
   "license": "MIT",

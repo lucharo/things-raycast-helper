@@ -73,7 +73,12 @@ const outlookHandler: AppHandler = {
       return "\n"
     `);
     const [title, url] = parseResult(result);
-    return { appName: "Microsoft Outlook", title: title || "Outlook Email", url: url || null, type: "email" };
+    return {
+      appName: "Microsoft Outlook",
+      title: title || "Outlook Email",
+      url: url || null,
+      type: "email",
+    };
   },
 };
 
@@ -122,7 +127,12 @@ const notesHandler: AppHandler = {
       return "\n"
     `);
     const [title, url] = parseResult(result);
-    return { appName: "Notes", title: title || "Note", url: url || null, type: "note" };
+    return {
+      appName: "Notes",
+      title: title || "Note",
+      url: url || null,
+      type: "note",
+    };
   },
 };
 
