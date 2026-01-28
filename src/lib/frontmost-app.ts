@@ -27,7 +27,7 @@ export async function getFrontmostAppContext(): Promise<CapturedContext> {
   `);
 
   if (EXCLUDED_APPS.has(appName.toLowerCase())) {
-    throw new ExcludedAppError(appName);
+    return { appName, title: "", url: null, type: "generic" };
   }
 
   const handler = getAppHandler(appName);

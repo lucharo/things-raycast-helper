@@ -7,7 +7,6 @@ import {
 import {
   getFrontmostAppContext,
   formatTitleWithEmoji,
-  ExcludedAppError,
 } from "./lib/frontmost-app";
 import { buildThingsUrl } from "./lib/things-url";
 import { Preferences } from "./lib/types";
@@ -17,6 +16,12 @@ export default async function Command() {
 
   try {
     const context = await getFrontmostAppContext();
+
+    if (!context.title) {
+      await showHUD("No context to capture");
+      return;
+    }
+
     const formattedTitle = formatTitleWithEmoji(context);
 
     const title =
@@ -43,10 +48,6 @@ export default async function Command() {
     await open(url);
     await showHUD(`✓ Added: ${context.title}`);
   } catch (error) {
-    if (error instanceof ExcludedAppError) {
-      await showHUD("✗ Terminal apps are excluded");
-    } else {
-      await showHUD(`✗ Failed: ${String(error)}`);
-    }
+    await showHUD(`✗ Failed: ${String(error)}`);
   }
 }
